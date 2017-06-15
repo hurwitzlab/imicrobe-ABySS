@@ -18,16 +18,10 @@ From: ubuntu:latest
     make
     make install
 
-    # Add environment variables to /environment file
-    echo "\nexport PATH=/abyss-2.0.2:\$PATH" >> /environment
-
     # Create mount points for TACC directories
     mkdir /home1
     mkdir /scratch
     mkdir /work
 
 %test
-    . /environment
-    echo "PATH=${PATH}"
-
     abyss-pe --version

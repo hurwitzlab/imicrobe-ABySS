@@ -1,0 +1,141 @@
+{
+    "checkpointable": false,
+    "defaultMaxRunTime": "12:00:00",
+    "defaultMemoryPerNode": 32,
+    "defaultNodeCount": 1,
+    "defaultProcessorsPerNode": 16,
+    "defaultQueue": "serial",
+    "deploymentPath": "jklynch/applications/imicrobe-abyss-0.0.2/stampede",
+    "deploymentSystem": "data.iplantcollaborative.org",
+    "executionSystem": "tacc-stampede-jklynch",
+    "executionType": "HPC",
+    "helpURI": "http://protocols.io",
+    "label": "iMicrobe ABySS",
+    "longDescription": "iMicrobe ABySS",
+    "modules": [],
+    "name": "imicrobe-abyss",
+    "ontology": [
+        "http://sswapmeet.sswap.info/agave/apps/Application"
+    ],
+    "parallelism": "SERIAL",
+    "shortDescription": "iMicrobe ABySS",
+    "tags": [
+        "imicrobe",
+        "ABySS",
+        "metagenomics",
+        "assembly"
+    ],
+    "templatePath": "template.sh",
+    "testPath": "test.sh",
+    "version": "0.0.2",
+    "inputs": [
+    {
+        "id": "FORWARD_READS",
+        "value": {
+            "default": "",
+            "required": false,
+            "visible": true
+        },
+        "semantics": {
+            "fileTypes": [
+                "raw-0"
+            ]
+        },
+        "details": {
+            "description": "Forward Read FASTA, FASTQ, qseq, export, SRA, SAM, or BAM File",
+            "label": "Forward Reads",
+            "argument": "-in ",
+            "showArgument": true,
+            "repeatArgument": true
+        }
+    },
+    {
+        "id": "REVERSE_READS",
+        "value": {
+            "default": "",
+            "required": false,
+            "visible": true
+        },
+        "semantics": {
+            "fileTypes": [
+                "raw-0"
+            ]
+        },
+        "details": {
+            "description": "Reverse Read FASTA, FASTQ, qseq, export, SRA, SAM, or BAM File",
+            "label": "Reverse Reads",
+            "argument": "-in ",
+            "showArgument": true,
+            "repeatArgument": true
+        }
+    },
+    {
+        "id": "SINGLE_END_READS",
+        "value": {
+            "default": "",
+            "required": false,
+            "visible": true
+        },
+        "semantics": {
+            "fileTypes": [
+                "raw-0"
+            ]
+        },
+        "details": {
+            "description": "Single-End Reads Input FASTA File",
+            "label": "Single-End Reads",
+            "argument": "-se ",
+            "showArgument": true,
+            "repeatArgument": true
+        }
+    }
+    ],
+    "parameters": [
+    {
+        "id": "NAME",
+        "details": {
+            "argument": "name=",
+            "description": "Output file prefix.",
+            "label": "Name",
+            "showArgument": true
+        },
+        "value": {
+            "default": "",
+            "required": true,
+            "type": "string",
+            "visible": true
+        }
+    },
+    {
+        "id": "k",
+        "details": {
+            "argument": "k=",
+            "description": "k-mer length",
+            "label": "k-mer length",
+            "showArgument": true
+        },
+        "value": {
+            "default": "",
+            "required": true,
+            "type": "string",
+            "visible": true
+        }
+    },
+    {
+        "id": "ADDITIONAL_ARGS",
+        "value": {
+            "default": "",
+            "required": false,
+            "type": "string",
+            "visible": true
+        },
+        "details": {
+            "description": "Additional command line arguments for ABySS",
+            "label": "Additional Command Line Arguments",
+            "argument": "",
+            "showArgument": false
+        }
+    }
+    ],
+    "outputs": []
+}

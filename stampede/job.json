@@ -1,0 +1,13 @@
+{
+  "name": "imicrobe-abyss-test",
+  "appId": "imicrobe-abyss-0.0.2",
+  "archive": true,
+  "inputs": {
+    "FORWARD_READS": "shared/iplant_training/genome_assembly_soapdenovo/A_Assemble_Reads/fragScSi_1.fq",
+    "REVERSE_READS": "shared/iplant_training/genome_assembly_soapdenovo/A_Assemble_Reads/fragScSi_2.fq"
+  },
+  "parameters": {
+    "NAME": "test",
+    "k": 32
+  }
+}

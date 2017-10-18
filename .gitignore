@@ -1,0 +1,12 @@
+.idea
+
+.DS_Store
+
+# Singularity
+*.img
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.cache

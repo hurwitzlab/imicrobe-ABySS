@@ -1,0 +1,28 @@
+Bootstrap: docker
+From: ubuntu:latest
+
+%runscript
+    abyss-pe $@
+
+%setup
+    # mount the imicrobe-ABySS directory for use in %post as /imicrobe-ABySS
+    mkdir "$SINGULARITY_ROOTFS/imicrobe-ABySS"
+    mount --no-mtab --bind `pwd` "$SINGULARITY_ROOTFS/imicrobe-ABySS"
+
+%post
+    apt update
+    apt install -y wget build-essential autoconf automake autotools-dev libboost-all-dev libsparsehash-dev
+
+    # Install ABySS from source
+    mkdir /build-abyss
+    cd /build-abyss
+    wget https://github.com/bcgsc/abyss/archive/2.0.2.tar.gz
+    tar -xf 2.0.2.tar.gz
+    cd abyss-2.0.2
+    ./autogen.sh
+    ./configure
+    make
+    make install
+
+%test
+    abyss-pe --version

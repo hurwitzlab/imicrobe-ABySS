@@ -18,8 +18,9 @@ clean:
 
 container:
 	rm -f stampede/$(APP).img
-	sudo singularity create --size 1000 stampede/$(APP).img
-	sudo singularity bootstrap stampede/$(APP).img singularity/$(APP).def
+	#sudo singularity create --size 2000 stampede/$(APP).img
+	#sudo singularity bootstrap stampede/$(APP).img singularity/$(APP).def
+	sudo singularity build stampede/$(APP).img singularity/$(APP).def
 	sudo chown --reference=singularity/$(APP).def stampede/$(APP).img
 
 iput-container:

@@ -2,10 +2,17 @@
 
 module load singularity
 
+echo "iMicrobe ABySS begin"
+echo "run.sh arguments:"
 echo "$@"
 
-#ABYSS_CMD_LINE_ARGS=`singularity exec imicrobe-abyss.img python3 /scripts/agave_to_abyss_cmd_line_args.py $@`
+pwd
+ls -l
 
-#echo "ABySS command line args: \"${ABYSS_CMD_LINE_ARGS}\""
+ABYSS_CMD_LINE_ARGS=`singularity exec imicrobe-abyss.img python3 /scripts/agave_to_abyss_cmd_line_args.py $@`
 
-#singularity run imicrobe-abyss.img ${ABYSS_CMD_LINE_ARGS}
+echo "ABySS command line args: \"${ABYSS_CMD_LINE_ARGS}\""
+
+singularity run imicrobe-abyss.img ${ABYSS_CMD_LINE_ARGS}
+
+echo "iMicrobe ABySS completed"

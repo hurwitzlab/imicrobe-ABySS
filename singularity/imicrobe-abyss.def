@@ -11,7 +11,11 @@ From: ubuntu:latest
 
 %post
     apt update
-    apt install -y wget build-essential autoconf automake autotools-dev libboost-all-dev libsparsehash-dev
+    apt install -y wget build-essential autoconf automake autotools-dev libboost-all-dev libsparsehash-dev python3
+
+    # install scripts
+    mkdir /scripts
+    cp /imicrobe-ABySS/scripts/agave_to_abyss_cmd_line_args.py /scripts/agave_to_abyss_cmd_line_args.py
 
     # Install ABySS from source
     mkdir /build-abyss

@@ -9,7 +9,7 @@
     "deploymentSystem": "data.iplantcollaborative.org",
     "executionSystem": "tacc-stampede-jklynch",
     "executionType": "HPC",
-    "helpURI": "http://protocols.io",
+    "helpURI": "https://github.com/bcgsc/abyss",
     "label": "iMicrobe ABySS",
     "longDescription": "iMicrobe ABySS",
     "modules": [],
@@ -42,9 +42,9 @@
             ]
         },
         "details": {
-            "description": "Forward Read FASTA, FASTQ, qseq, export, SRA, SAM, or BAM File",
+            "description": "Forward Read FASTA, FASTQ, qseq, export, SRA, SAM, or BAM File. Files may be compressed with gzip, bzip2, or xz.",
             "label": "Forward Reads",
-            "argument": "-in ",
+            "argument": "-fp ",
             "showArgument": true,
             "repeatArgument": true
         }
@@ -62,9 +62,49 @@
             ]
         },
         "details": {
-            "description": "Reverse Read FASTA, FASTQ, qseq, export, SRA, SAM, or BAM File",
+            "description": "Reverse Read FASTA, FASTQ, qseq, export, SRA, SAM, or BAM File. Files may be compressed with gzip, bzip2, or xz.",
             "label": "Reverse Reads",
-            "argument": "-in ",
+            "argument": "-rp ",
+            "showArgument": true,
+            "repeatArgument": true
+        }
+    },
+    {
+        "id": "FORWARD_MATE_PAIRS",
+        "value": {
+            "default": "",
+            "required": false,
+            "visible": true
+        },
+        "semantics": {
+            "fileTypes": [
+                "raw-0"
+            ]
+        },
+        "details": {
+            "description": "Forward Mate Pairs FASTA, FASTQ, qseq, export, SRA, SAM, or BAM File. Files may be compressed with gzip, bzip2, or xz.",
+            "label": "Forward Reads",
+            "argument": "-fm ",
+            "showArgument": true,
+            "repeatArgument": true
+        }
+    },
+    {
+        "id": "REVERSE_MATE_PAIRS",
+        "value": {
+            "default": "",
+            "required": false,
+            "visible": true
+        },
+        "semantics": {
+            "fileTypes": [
+                "raw-0"
+            ]
+        },
+        "details": {
+            "description": "Reverse Mate Pairs FASTA, FASTQ, qseq, export, SRA, SAM, or BAM File. Files may be compressed with gzip, bzip2, or xz.",
+            "label": "Reverse Reads",
+            "argument": "-rm ",
             "showArgument": true,
             "repeatArgument": true
         }
@@ -82,9 +122,29 @@
             ]
         },
         "details": {
-            "description": "Single-End Reads Input FASTA File",
+            "description": "Single-End Reads FASTA, FASTQ, qseq, export, SRA, SAM, or BAM File. Files may be compressed with gzip, bzip2, or xz.",
             "label": "Single-End Reads",
             "argument": "-se ",
+            "showArgument": true,
+            "repeatArgument": true
+        }
+    },
+    {
+        "id": "LONG_SEQS",
+        "value": {
+            "default": "",
+            "required": false,
+            "visible": true
+        },
+        "semantics": {
+            "fileTypes": [
+                "raw-0"
+            ]
+        },
+        "details": {
+            "description": "Long Sequence  FASTA, FASTQ, qseq, export, SRA, SAM, or BAM File. Files may be compressed with gzip, bzip2, or xz.",
+            "label": "Long Sequences",
+            "argument": "-long ",
             "showArgument": true,
             "repeatArgument": true
         }
@@ -94,7 +154,7 @@
     {
         "id": "NAME",
         "details": {
-            "argument": "name=",
+            "argument": "--name ",
             "description": "Output file prefix.",
             "label": "Name",
             "showArgument": true
@@ -107,11 +167,11 @@
         }
     },
     {
-        "id": "k",
+        "id": "KMER_LENGTH",
         "details": {
-            "argument": "k=",
+            "argument": "--kmer-length ",
             "description": "k-mer length",
-            "label": "k-mer length",
+            "label": "k-mer length (or k-mer pair span if K is specified)",
             "showArgument": true
         },
         "value": {

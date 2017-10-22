@@ -11,21 +11,20 @@
 
 module load irods
 
-INPUT_DIR="$SCRATCH/imicrobe-abyss/test"
-#if [[ -d $INPUT_DIR ]]; then
-#  rm -rf $INPUT_DIR
-#fi
+INPUT_DIR=test/input
+if [[ -d $INPUT_DIR ]]; then
+  rm -rf $INPUT_DIR
+fi
 
-#mkdir -p $INPUT_DIR
-#iget /iplant/home/shared/imicrobe/projects/264/samples/5279/E_coli_S_flexneri_0.001.fa $INPUT_DIR
+mkdir -p $INPUT_DIR
+iget -v test/imicrobe-abyss/fragScSi_1.fq $INPUT_DIR
+iget -v test/imicrobe-abyss/fragScSi_2.fq $INPUT_DIR
 
-#INPUT_FILE=${INPUT_DIR}/E_coli_S_flexneri_0.001.fa
-
-OUTPUT_DIR="$SCRATCH/imicrobe-megahit/test/output"
+OUTPUT_DIR=test/output
 if [[ -d $OUTPUT_DIR ]]; then
   rm -rf $OUTPUT_DIR
 fi
 
-#mkdir -p $OUTPUT_DIR
+mkdir -p $OUTPUT_DIR
 
-./run.sh --name test --kmer-length 64 -fp $INPUT_FILE/fragScSi_1.fq -rp $INPUT_FILE/fragScSi_2.fq
+./run.sh --name $OUTPUT_DIR/test --kmer-length 64 -fp $INPUT_DIR/fragScSi_1.fq -rp $INPUT_DIR/fragScSi_2.fq

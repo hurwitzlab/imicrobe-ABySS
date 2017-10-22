@@ -2,6 +2,7 @@ Bootstrap: docker
 From: ubuntu:latest
 
 %runscript
+    echo $@
     abyss-pe $@
 
 %setup
@@ -11,7 +12,11 @@ From: ubuntu:latest
 
 %post
     apt update
-    apt install -y wget build-essential autoconf automake autotools-dev libboost-all-dev libsparsehash-dev python3
+    apt install -y wget apt-utils build-essential autoconf automake autotools-dev libboost-all-dev libsparsehash-dev
+    apt install -y software-properties-common python-software-properties
+    add-apt-repository ppa:fkrull/deadsnakes
+    apt update
+    apt install -y python3.6
 
     # install scripts
     mkdir /scripts
@@ -28,5 +33,7 @@ From: ubuntu:latest
     make
     make install
 
+
 %test
     abyss-pe --version
+    python3 --version

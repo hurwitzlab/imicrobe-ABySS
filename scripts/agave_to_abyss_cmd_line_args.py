@@ -26,6 +26,7 @@ leave normal ABySS command line args alone.
 """
 import argparse
 import io
+import subprocess
 import sys
 
 
@@ -37,7 +38,7 @@ def get_args(argv):
     """
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--name', required=True, help='Output file prefix.')
-    arg_parser.add_argument('--kmer-pair-span', required=True, type=int, help='k-mer pair span')
+    arg_parser.add_argument('--kmer-length', required=True, type=int, help='k-mer length')
     # parse_known_args does not ignore the first element of argv so remove it first
     return arg_parser.parse_known_args(args=argv[1:])
 
@@ -64,7 +65,7 @@ def convert_agave_args_to_abyss_cmd_line(agave_cmd_line_args):
         else:
             additional_args.append(next_arg)
 
-    cmd_line_args = io.StringIO()
+    cmd_line_arg_list = []
 
     # zip the forward and reverse lists
     #   t = {
@@ -87,16 +88,16 @@ def convert_agave_args_to_abyss_cmd_line(agave_cmd_line_args):
     if len(paired_file_names) == 0:
         pass
     elif len(paired_file_names) == 1:
-        cmd_line_args.write("in='{}'".format(' '.join(paired_file_names[0][1:])))
+        cmd_line_arg_list.append("in={}".format(' '.join(paired_file_names[0][1:])))
     else:
-        cmd_line_args.write("lib='{}'".format(' '.join([p[0] for p in paired_file_names])))
+        cmd_line_arg_list.append("lib='{}'".format(' '.join([p[0] for p in paired_file_names])))
         for paired_end_library_name, fp, rp in paired_file_names:
-            cmd_line_args.write(" {}='{} {}'".format(paired_end_library_name, fp, rp))
+            cmd_line_arg_list.append("{}='{} {}'".format(paired_end_library_name, fp, rp))
 
     if len(input_option_table['-se']) == 0:
         pass
     else:
-        cmd_line_args.write(" se='{}'".format(' '.join(input_option_table['-se'])))
+        cmd_line_arg_list.append("se='{}'".format(' '.join(input_option_table['-se'])))
 
     # handle mate-pair libraries
     mate_pairs = list(zip(
@@ -106,40 +107,44 @@ def convert_agave_args_to_abyss_cmd_line(agave_cmd_line_args):
     if len(mate_pairs) == 0:
         pass
     else:
-        cmd_line_args.write(" mp='{}'".format(' '.join([p[0] for p in mate_pairs])))
+        cmd_line_arg_list.append("mp='{}'".format(' '.join([p[0] for p in mate_pairs])))
         for paired_end_library_name, fm, rm in mate_pairs:
-            cmd_line_args.write(" {}='{} {}'".format(paired_end_library_name, fm, rm))
+            cmd_line_arg_list.append("{}='{} {}'".format(paired_end_library_name, fm, rm))
 
     # handle long sequences
     if len(input_option_table['-long']) == 0:
         pass
     else:
-        long_args = list(zip(
-            ['long{}'.format(l+1) for l in range(len(input_option_table['-long']))],
-            input_option_table['-long']))
+        long_args = list(
+            zip(
+                ['long{}'.format(l+1) for l in range(len(input_option_table['-long']))],
+                input_option_table['-long']))
 
-        cmd_line_args.write(" long='{}'".format(' '.join([l[0] for l in long_args])))
+        cmd_line_arg_list.append("long='{}'".format(' '.join([l[0] for l in long_args])))
         for long_name, long_seq in long_args:
-            cmd_line_args.write(" {}='{}'".format(long_name, long_seq))
+            cmd_line_arg_list.append("{}='{}'".format(long_name, long_seq))
 
-    if len(additional_args) > 0:
-        cmd_line_args.write(' ')
-        cmd_line_args.write(' '.join(additional_args))
+    cmd_line_arg_list.extend(additional_args)
 
-    return cmd_line_args.getvalue().strip()
+    return cmd_line_arg_list
 
 
 def get_abyss_cmd_line(script_args, agave_cmd_line_args):
-    return 'name={} k={} {}'.format(
-        script_args.name,
-        script_args.kmer_pair_span,
-        convert_agave_args_to_abyss_cmd_line(agave_cmd_line_args)
-    )
+    cmd_line_args = [
+        'name={}'.format(script_args.name),
+        'k={}'.format(script_args.kmer_length)
+    ]
+    cmd_line_args.extend(convert_agave_args_to_abyss_cmd_line(agave_cmd_line_args))
+
+    return cmd_line_args
 
 
 if __name__ == '__main__':
     script_args, agave_cmd_line_args = get_args(sys.argv)
     print(get_abyss_cmd_line(script_args=script_args, agave_cmd_line_args=agave_cmd_line_args))
+    cp = subprocess.run(
+            ['abyss-pe'] + get_abyss_cmd_line(script_args=script_args, agave_cmd_line_args=agave_cmd_line_args),
+            stdout=sys.stdout, stderr=sys.stderr, universal_newlines=True)
 
 
 def test_assemble_paired_end_library():
@@ -148,26 +153,26 @@ def test_assemble_paired_end_library():
         abyss-pe name=ecoli k=64 in='reads1.fa reads2.fa'
 
     from Agave arguments
-        --name=ecoli --kmer-pair-span=64 -fp reads1.fa -rp reads2.fa
+        --name=ecoli --kmer-length=64 -fp reads1.fa -rp reads2.fa
     """
     script_args, cmd_line_args = get_args(
         [
             'this_script.py',
             '--name', 'ecoli',
-            '--kmer-pair-span', '64',
+            '--kmer-length', '64',
             '-fp', 'reads1.fa',
             '-rp', 'reads2.fa'
         ]
     )
     assert script_args.name == 'ecoli'
-    assert script_args.kmer_pair_span == 64
+    assert script_args.kmer_length == 64
     assert cmd_line_args == ['-fp', 'reads1.fa', '-rp', 'reads2.fa']
 
     agave_args_to_abyss_cmd_line = convert_agave_args_to_abyss_cmd_line(agave_cmd_line_args=cmd_line_args)
-    assert agave_args_to_abyss_cmd_line == "in='reads1.fa reads2.fa'"
+    assert agave_args_to_abyss_cmd_line == ["in='reads1.fa reads2.fa'"]
 
     all_abyss_cmd_line_args = get_abyss_cmd_line(script_args=script_args, agave_cmd_line_args=cmd_line_args)
-    assert all_abyss_cmd_line_args == "name=ecoli k=64 in='reads1.fa reads2.fa'"
+    assert all_abyss_cmd_line_args == ["name=ecoli", "k=64", "in='reads1.fa reads2.fa'"]
 
 
 def test_assemble_multiple_libraries():
@@ -178,13 +183,13 @@ def test_assemble_multiple_libraries():
 	        se='se1.fa se2.fa'
 
     from Agave arguments
-        --name=ecoli --kmer-pair-span=64 -fp reads1.fa -fp reads2.a -rp reads3.fa -rp reads4.fa
+        --name=ecoli --kmer-length=64 -fp reads1.fa -fp reads2.a -rp reads3.fa -rp reads4.fa
     """
     script_args, cmd_line_args = get_args(
         [
             'this_script.py',
             '--name', 'ecoli',
-            '--kmer-pair-span', '64',
+            '--kmer-length', '64',
             '-fp', 'pea_1.fa',
             '-fp', 'peb_1.fa',
             '-rp', 'pea_2.fa',
@@ -194,7 +199,7 @@ def test_assemble_multiple_libraries():
         ]
     )
     assert script_args.name == 'ecoli'
-    assert script_args.kmer_pair_span == 64
+    assert script_args.kmer_length == 64
     assert cmd_line_args == [
         '-fp', 'pea_1.fa',
         '-fp', 'peb_1.fa',
@@ -204,10 +209,17 @@ def test_assemble_multiple_libraries():
         '-se', 'se2.fa']
 
     agave_args_to_abyss_cmd_line = convert_agave_args_to_abyss_cmd_line(agave_cmd_line_args=cmd_line_args)
-    assert agave_args_to_abyss_cmd_line == "lib='pe1 pe2' pe1='pea_1.fa pea_2.fa' pe2='peb_1.fa peb_2.fa' se='se1.fa se2.fa'"
+    assert agave_args_to_abyss_cmd_line == [
+        "lib='pe1 pe2'",
+        "pe1='pea_1.fa pea_2.fa'", "pe2='peb_1.fa peb_2.fa'",
+        "se='se1.fa se2.fa'"]
 
     all_abyss_cmd_line_args = get_abyss_cmd_line(script_args=script_args, agave_cmd_line_args=cmd_line_args)
-    assert all_abyss_cmd_line_args == "name=ecoli k=64 lib='pe1 pe2' pe1='pea_1.fa pea_2.fa' pe2='peb_1.fa peb_2.fa' se='se1.fa se2.fa'"
+    assert all_abyss_cmd_line_args == [
+        "name=ecoli", "k=64",
+        "lib='pe1 pe2'",
+        "pe1='pea_1.fa pea_2.fa'", "pe2='peb_1.fa peb_2.fa'",
+        "se='se1.fa se2.fa'"]
 
 
 def test_scaffolding():
@@ -226,7 +238,7 @@ def test_scaffolding():
         [
             'this_script.py',
             '--name', 'ecoli',
-            '--kmer-pair-span', '64',
+            '--kmer-length', '64',
             '-fp', 'pea_1.fa',
             '-rp', 'pea_2.fa',
             '-fp', 'peb_1.fa',
@@ -238,7 +250,7 @@ def test_scaffolding():
         ]
     )
     assert script_args.name == 'ecoli'
-    assert script_args.kmer_pair_span == 64
+    assert script_args.kmer_length == 64
     assert cmd_line_args == [
         '-fp', 'pea_1.fa',
         '-rp', 'pea_2.fa',
@@ -251,13 +263,17 @@ def test_scaffolding():
     ]
 
     agave_args_to_abyss_cmd_line = convert_agave_args_to_abyss_cmd_line(agave_cmd_line_args=cmd_line_args)
-    assert agave_args_to_abyss_cmd_line == "lib='pe1 pe2' pe1='pea_1.fa pea_2.fa' pe2='peb_1.fa peb_2.fa' mp='mp1 mp2' mp1='mpc_1.fa mpc_2.fa' mp2='mpd_1.fa mpd_2.fa'"
+    assert agave_args_to_abyss_cmd_line == [
+        "lib='pe1 pe2'",
+        "pe1='pea_1.fa pea_2.fa'", "pe2='peb_1.fa peb_2.fa'",
+        "mp='mp1 mp2'",
+        "mp1='mpc_1.fa mpc_2.fa'", "mp2='mpd_1.fa mpd_2.fa'"]
 
     all_abyss_cmd_line_args = get_abyss_cmd_line(script_args=script_args, agave_cmd_line_args=cmd_line_args)
-    assert all_abyss_cmd_line_args == \
-        "name=ecoli k=64 " \
-        "lib='pe1 pe2' pe1='pea_1.fa pea_2.fa' pe2='peb_1.fa peb_2.fa' " \
-        "mp='mp1 mp2' mp1='mpc_1.fa mpc_2.fa' mp2='mpd_1.fa mpd_2.fa'"
+    assert all_abyss_cmd_line_args == [
+        "name=ecoli", "k=64",
+        "lib='pe1 pe2'", "pe1='pea_1.fa pea_2.fa'", "pe2='peb_1.fa peb_2.fa'",
+        "mp='mp1 mp2'", "mp1='mpc_1.fa mpc_2.fa'", "mp2='mpd_1.fa mpd_2.fa'"]
 
 
 def test_rescaffolding_with_long_sequences():
@@ -278,7 +294,7 @@ def test_rescaffolding_with_long_sequences():
         [
             'this_script.py',
             '--name', 'ecoli',
-            '--kmer-pair-span', '64',
+            '--kmer-length', '64',
             '-fp', 'pea_1.fa',
             '-rp', 'pea_2.fa',
             '-fp', 'peb_1.fa',
@@ -291,7 +307,7 @@ def test_rescaffolding_with_long_sequences():
         ]
     )
     assert script_args.name == 'ecoli'
-    assert script_args.kmer_pair_span == 64
+    assert script_args.kmer_length == 64
     assert cmd_line_args == [
         '-fp', 'pea_1.fa',
         '-rp', 'pea_2.fa',
@@ -305,17 +321,17 @@ def test_rescaffolding_with_long_sequences():
     ]
 
     agave_args_to_abyss_cmd_line = convert_agave_args_to_abyss_cmd_line(agave_cmd_line_args=cmd_line_args)
-    assert agave_args_to_abyss_cmd_line == \
-        "lib='pe1 pe2' pe1='pea_1.fa pea_2.fa' pe2='peb_1.fa peb_2.fa' " \
-        "mp='mp1 mp2' mp1='mpc_1.fa mpc_2.fa' mp2='mpd_1.fa mpd_2.fa' " \
-        "long='long1' long1='longa.fa'"
+    assert agave_args_to_abyss_cmd_line == [
+        "lib='pe1 pe2'", "pe1='pea_1.fa pea_2.fa'", "pe2='peb_1.fa peb_2.fa'",
+        "mp='mp1 mp2'", "mp1='mpc_1.fa mpc_2.fa'", "mp2='mpd_1.fa mpd_2.fa'",
+        "long='long1'", "long1='longa.fa'"]
 
     all_abyss_cmd_line_args = get_abyss_cmd_line(script_args=script_args, agave_cmd_line_args=cmd_line_args)
-    assert all_abyss_cmd_line_args == \
-        "name=ecoli k=64 " \
-        "lib='pe1 pe2' pe1='pea_1.fa pea_2.fa' pe2='peb_1.fa peb_2.fa' " \
-        "mp='mp1 mp2' mp1='mpc_1.fa mpc_2.fa' mp2='mpd_1.fa mpd_2.fa' " \
-        "long='long1' long1='longa.fa'"
+    assert all_abyss_cmd_line_args == [
+        "name=ecoli", "k=64",
+        "lib='pe1 pe2'", "pe1='pea_1.fa pea_2.fa'", "pe2='peb_1.fa peb_2.fa'",
+        "mp='mp1 mp2'", "mp1='mpc_1.fa mpc_2.fa'", "mp2='mpd_1.fa mpd_2.fa'",
+        "long='long1'", "long1='longa.fa'"]
 
 
 def test_bloom_filter_de_bruijn_graph():
@@ -325,13 +341,13 @@ def test_bloom_filter_de_bruijn_graph():
         abyss-pe name=ecoli k=64 in='reads1.fa reads2.fa' B=100M H=3 kc=3 v=-v
 
     from Agave arguments
-        --name=ecoli --kmer-pair-span=64 -fp reads1.fa -rp reads2.fa B=100M H=3 kc=3 v=-v
+        --name=ecoli --kmer-length=64 -fp reads1.fa -rp reads2.fa B=100M H=3 kc=3 v=-v
     """
     script_args, cmd_line_args = get_args(
         [
             'this_script.py',
             '--name=ecoli',
-            '--kmer-pair-span=64',
+            '--kmer-length=64',
             '-fp', 'pea_1.fa',
             '-rp', 'pea_2.fa',
             'B=100M',
@@ -341,7 +357,7 @@ def test_bloom_filter_de_bruijn_graph():
         ]
     )
     assert script_args.name == 'ecoli'
-    assert script_args.kmer_pair_span == 64
+    assert script_args.kmer_length == 64
     assert cmd_line_args == [
         '-fp', 'pea_1.fa',
         '-rp', 'pea_2.fa',
@@ -352,15 +368,15 @@ def test_bloom_filter_de_bruijn_graph():
     ]
 
     agave_args_to_abyss_cmd_line = convert_agave_args_to_abyss_cmd_line(agave_cmd_line_args=cmd_line_args)
-    assert agave_args_to_abyss_cmd_line == \
-        "in='pea_1.fa pea_2.fa' " \
-        "B=100M H=3 kc=3 v=-v"
+    assert agave_args_to_abyss_cmd_line == [
+        "in='pea_1.fa pea_2.fa'",
+        "B=100M", "H=3", "kc=3", "v=-v"]
 
     all_abyss_cmd_line_args = get_abyss_cmd_line(script_args=script_args, agave_cmd_line_args=cmd_line_args)
-    assert all_abyss_cmd_line_args == \
-        "name=ecoli k=64 " \
-        "in='pea_1.fa pea_2.fa' " \
-        "B=100M H=3 kc=3 v=-v"
+    assert all_abyss_cmd_line_args == [
+        "name=ecoli", "k=64",
+        "in='pea_1.fa pea_2.fa'",
+        "B=100M", "H=3", "kc=3", "v=-v"]
 
 
 def test_paired_de_bruijn_graph():
@@ -370,20 +386,20 @@ def test_paired_de_bruijn_graph():
         abyss-pe name=ecoli k=64 in='reads1.fa reads2.fa' B=100M H=3 kc=3 v=-v
 
     from Agave arguments
-        --name=ecoli --kmer-pair-span=64 -fp reads1.fa -rp reads2.fa B=100M H=3 kc=3 v=-v
+        --name=ecoli --kmer-length=64 -fp reads1.fa -rp reads2.fa B=100M H=3 kc=3 v=-v
     """
     script_args, cmd_line_args = get_args(
         [
             'this_script.py',
             '--name=ecoli',
-            '--kmer-pair-span=64',
+            '--kmer-length=64',
             '-fp', 'pea_1.fa',
             '-rp', 'pea_2.fa',
             'K=16'
         ]
     )
     assert script_args.name == 'ecoli'
-    assert script_args.kmer_pair_span == 64
+    assert script_args.kmer_length == 64
     assert cmd_line_args == [
         '-fp', 'pea_1.fa',
         '-rp', 'pea_2.fa',
@@ -391,13 +407,13 @@ def test_paired_de_bruijn_graph():
     ]
 
     agave_args_to_abyss_cmd_line = convert_agave_args_to_abyss_cmd_line(agave_cmd_line_args=cmd_line_args)
-    assert agave_args_to_abyss_cmd_line == \
-        "in='pea_1.fa pea_2.fa' " \
-        "K=16"
+    assert agave_args_to_abyss_cmd_line == [
+        "in='pea_1.fa pea_2.fa'",
+        "K=16"]
 
     all_abyss_cmd_line_args = get_abyss_cmd_line(script_args=script_args, agave_cmd_line_args=cmd_line_args)
-    assert all_abyss_cmd_line_args == \
-        "name=ecoli k=64 " \
-        "in='pea_1.fa pea_2.fa' " \
-        "K=16"
+    assert all_abyss_cmd_line_args == [
+        "name=ecoli", "k=64",
+        "in='pea_1.fa pea_2.fa'",
+        "K=16"]
 

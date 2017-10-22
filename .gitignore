@@ -1,3 +1,6 @@
+stampede/local_test.sh
+stampede/test/*
+
 .idea
 
 .DS_Store

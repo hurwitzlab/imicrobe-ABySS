@@ -1,4 +1,3 @@
-stampede/local_test.sh
 stampede/test/*
 
 .idea
